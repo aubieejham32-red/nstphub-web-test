@@ -18,3 +18,5 @@ storage/framework/views/*
 .vscode
 .idea
 .DS_Store
+
+ca.pem
