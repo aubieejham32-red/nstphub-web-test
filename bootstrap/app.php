@@ -19,11 +19,22 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
         |--------------------------------------------------------------------------
-        | Sanctum
+        | Render Trusted Proxy
         |--------------------------------------------------------------------------
         |
-        | Allows Laravel Sanctum to properly handle stateful requests.
+        | Render terminates HTTPS at its proxy and forwards traffic to the
+        | Docker container over HTTP. Trust the proxy so Laravel uses the
+        | original X-Forwarded-Proto header and generates HTTPS URLs.
         |
+        */
+
+        $middleware->trustProxies(at: '*');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sanctum
+        |--------------------------------------------------------------------------
         */
 
         $middleware->statefulApi();
@@ -58,32 +69,10 @@ return Application::configure(basePath: dirname(__DIR__))
         |--------------------------------------------------------------------------
         | Guest Redirect
         |--------------------------------------------------------------------------
-        |
-        | Laravel's default authentication system normally redirects
-        | unauthenticated users to /login.
-        |
-        | NSTP HUB uses separate login pages for:
-        |
-        | - University Administrator
-        | - Instructor / Coordinator
-        | - Super Administrator
-        |
-        | This prevents Laravel from trying to load:
-        |
-        | resources/js/pages/auth/Login.vue
-        |
-        | which does not belong to our custom NSTP HUB authentication flow.
-        |
         */
 
         $middleware->redirectGuestsTo(
             function (Request $request): string {
-
-                /*
-                |--------------------------------------------------------------------------
-                | University Administrator
-                |--------------------------------------------------------------------------
-                */
 
                 if (
                     $request->is('university-admin') ||
@@ -92,13 +81,6 @@ return Application::configure(basePath: dirname(__DIR__))
                     return route('university-admin.login');
                 }
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | Instructor / Coordinator
-                |--------------------------------------------------------------------------
-                */
-
                 if (
                     $request->is('instructor-coordinator') ||
                     $request->is('instructor-coordinator/*')
@@ -106,30 +88,12 @@ return Application::configure(basePath: dirname(__DIR__))
                     return route('instructor-coordinator.login');
                 }
 
-
-                /*
-                |--------------------------------------------------------------------------
-                | Super Administrator
-                |--------------------------------------------------------------------------
-                */
-
                 if (
                     $request->is('superadmin') ||
                     $request->is('superadmin/*')
                 ) {
                     return route('superadmin.login');
                 }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Default
-                |--------------------------------------------------------------------------
-                |
-                | If an authenticated area doesn't belong to one of the
-                | portals above, return the user to the NSTP HUB role page.
-                |
-                */
 
                 return route('role');
             }
