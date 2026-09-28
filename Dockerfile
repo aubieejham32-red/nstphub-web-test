@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     gnupg \
+    passwd \
     libzip-dev \
     libicu-dev \
     libonig-dev \
@@ -50,6 +51,15 @@ RUN mkdir -p \
     bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
+
+# Allow Apache/PHP (www-data) to read Render secret files.
+RUN if getent group 1000 >/dev/null; then \
+        SECRET_GROUP="$(getent group 1000 | cut -d: -f1)"; \
+    else \
+        groupadd -g 1000 rendersecrets; \
+        SECRET_GROUP="rendersecrets"; \
+    fi \
+    && usermod -a -G "$SECRET_GROUP" www-data
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
